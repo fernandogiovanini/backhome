@@ -27,6 +27,7 @@ var copyCommand = &cobra.Command{
 	Short: "Copy target files",
 	Long:  "Copy target files to local repository, replacing any changes on destination",
 	Run: func(cmd *cobra.Command, args []string) {
+		logger.Info("copying target files...")
 		var resolvedPaths, err = resolvePaths(config.Configuration.Targets)
 		if err != nil {
 			logger.Fatalf("failed to resolve target paths: %s", err)
@@ -37,6 +38,7 @@ var copyCommand = &cobra.Command{
 		if err := copyFilesToLocal(resolvedPaths, config.Configuration.Local); err != nil {
 			logger.Fatalf("failed to copy files: %s", err)
 		}
+		logger.Info("done.")
 	},
 }
 
@@ -46,15 +48,9 @@ func validateTargets(targets []Target) error {
 		logger.Debug("validating target", logger.Args("target", target.resolvedPath))
 		file, err := os.Open(target.resolvedPath)
 		if err != nil {
-			logger.Err(err)
 			return fmt.Errorf("failed to open target %s: %s", target.resolvedPath, err)
 		}
-		defer file.Close()
-
-		if err != nil {
-			logger.Err(err)
-			return fmt.Errorf("target %s is not a readable file: %s", target.resolvedPath, err)
-		}
+		file.Close()
 	}
 	return nil
 }
