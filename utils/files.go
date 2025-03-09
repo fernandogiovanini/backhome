@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,8 +27,4 @@ func ResolvePath(path string) (string, error) {
 	}
 	logger.Debug("path %s resolved to %s", path, resolved)
 	return resolved, nil
-}
-
-func CopyDir(dstPath string, srcPath string) error {
-	return errors.New("CopyDir NOT IMPLEMENTED YET")
 }

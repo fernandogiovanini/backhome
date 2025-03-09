@@ -35,19 +35,23 @@ var (
 				logger.Fatalf("failed to resolve target paths: %v", err)
 			}
 
-			if err := items.CopyTo(local); err != nil {
+			if err := items.CopyTo(local); err == nil {
+				safeCopy.Delete()
+				logger.Info("done.")
+			} else {
 				logger.Err("failed to copy files: %v", err)
-				if err := safeCopy.RestoreTo(); err != nil && safeRun {
-					logger.Err("failed to restore files from %s to %s: %s", safeCopy.Path, safeCopy.OriginalPath, err)
+				if safeRun {
+					if err := backhome.RestoreSafeCopy(safeCopy); err != nil {
+						logger.Err("failed to restore safe copy: %w", err)
+					}
 				}
 				logger.Fatalf("failed to copy file to %s: %v", local.BasePath, err)
 			}
-			logger.Info("done.")
 		},
 	}
 )
 
 func init() {
-	copyCommand.LocalFlags().BoolVarP(&safeRun, "safe", "s", false, "Create a safe copy of the local repository files before copying news files to it. Default to false")
+	copyCommand.Flags().BoolVar(&safeRun, "safe", true, "Create a safe copy of the local repository files before copying news files to it. Default to true")
 	rootCommand.AddCommand(copyCommand)
 }

@@ -1,4 +1,5 @@
 backhome-local/
+backhome-local.backhome/
 .backhome.yaml
 .zshrc
 .oh-my-posh.omp.json
