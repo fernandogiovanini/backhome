@@ -19,7 +19,16 @@ var rootCommand = &cobra.Command{
 }
 
 func init() {
-	cobra.OnInitialize(logger.InitLogger, config.InitConfig)
+	cobra.OnInitialize(func() {
+		cmd := rootCommand.CalledAs()
+
+		// do not load config if command is init so we can create
+		// the config file
+		if cmd != "init" {
+			config.InitConfig()
+		}
+		logger.InitLogger()
+	})
 
 	rootCommand.PersistentFlags().StringVar(&config.ConfigFile, "config", "", strings.Join([]string{"Default to ", config.DefaultConfigPath(), "/.backhome.yaml"}, ""))
 	rootCommand.PersistentFlags().StringVar(&logger.LogLevelStr, "logLevel", "INFO", "INFO, DEBUG, ERROR. Default to  INFO")
