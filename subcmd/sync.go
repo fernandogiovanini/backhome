@@ -1,4 +1,4 @@
-package cmd
+package subcmd
 
 import (
 	"github.com/fernandogiovanini/backhome/logger"

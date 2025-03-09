@@ -1,4 +1,4 @@
-backhome-remote/
-.config.yaml
+backhome-local/
+.backhome.yaml
 .zshrc
 .oh-my-posh.omp.json

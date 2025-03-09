@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/fernandogiovanini/backhome/cmd"
+	cmd "github.com/fernandogiovanini/backhome/subcmd"
 )
 
 func main() {

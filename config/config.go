@@ -1,8 +1,11 @@
 package config
 
 import (
+	"os"
+
 	"github.com/fernandogiovanini/backhome/logger"
 	"github.com/fernandogiovanini/backhome/utils"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -12,43 +15,39 @@ var (
 )
 
 type Config struct {
-	Targets []string `mapstructure:"targets"`
-	Local   string   `mapstructure:"local"`
-	Remote  string   `mapstructure:"remote"`
+	BackupItems []string `mapstructure:"targets"`
+	Local       string   `mapstructure:"local"`
+	Remote      string   `mapstructure:"remote"`
 }
 
 func InitConfig() {
 	if ConfigFile != "" {
-		logger.Debug("config file provided", logger.Args("configFile", ConfigFile))
+		logger.Debug("config file provided: %s", ConfigFile)
 		configPath, err := utils.ResolvePath(ConfigFile)
 		if err != nil {
-			logger.Fatalf("failed to load config file %s: %s", viper.ConfigFileUsed(), err)
+			logger.Fatalf("failed to load config file %s: %v", viper.ConfigFileUsed(), err)
 		}
 		viper.SetConfigFile(configPath)
 	} else {
 		logger.Debug("config file default")
-		viper.AddConfigPath(defaultConfigPath())
-		viper.SetConfigName(".config")
+		viper.AddConfigPath(DefaultConfigPath())
+		viper.SetConfigName(".backhome")
 		viper.SetConfigType("yaml")
-		logger.Debug("config file used", logger.Args("configFIle", viper.ConfigFileUsed()))
 	}
 
+	logger.Info("loading config file %s", viper.ConfigFileUsed())
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Fatalf("failed to load config file %s: %s", viper.ConfigFileUsed(), err)
+		logger.Fatalf("failed to load config file %s: %v", viper.ConfigFileUsed(), err)
 	}
 
 	if err := viper.Unmarshal(&Configuration); err != nil {
-		logger.Fatalf("invalid config file %s: %s", viper.ConfigFileUsed(), err)
+		logger.Fatalf("invalid config file %s: %v", viper.ConfigFileUsed(), err)
 	}
 }
 
-func defaultConfigPath() string {
-	// if environment == "DEV" {
-	return "./"
+func DefaultConfigPath() string {
+	home, err := os.UserHomeDir()
+	cobra.CheckErr(err)
 
-	// if not DEV
-	// home, err := os.UserHomeDir()
-	// cobra.CheckErr(err)
-
-	// return home
+	return home
 }
