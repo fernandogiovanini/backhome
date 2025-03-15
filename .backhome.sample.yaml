@@ -1,8 +1,7 @@
 # Copy target files to local then push to remote
 
-targets:
+files:
   - file1
   - file2
 
-local: directory
 remote: github repository

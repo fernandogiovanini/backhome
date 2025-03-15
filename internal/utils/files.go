@@ -6,15 +6,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fernandogiovanini/backhome/logger"
+	"github.com/fernandogiovanini/backhome/internal/logger"
 )
 
 func ExpandHome(path string) string {
 	if !strings.HasPrefix(path, "~/") {
 		return path
 	}
-	homedir, _ := os.UserHomeDir()
-	expanded := filepath.Join(homedir, path[2:])
+	home, _ := os.UserHomeDir()
+	expanded := filepath.Join(home, path[2:])
 	logger.Debug("path %s expanded to %s", path, expanded)
 	return expanded
 }

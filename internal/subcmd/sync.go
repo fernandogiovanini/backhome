@@ -1,7 +1,7 @@
 package subcmd
 
 import (
-	"github.com/fernandogiovanini/backhome/logger"
+	"github.com/fernandogiovanini/backhome/internal/logger"
 	"github.com/spf13/cobra"
 )
 
