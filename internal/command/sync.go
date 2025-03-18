@@ -12,7 +12,7 @@ func init() {
 var syncCommand = &cobra.Command{
 	Use:   "sync",
 	Short: "Push changes to remote reposiitory",
-	Long:  "Push target files in local folder to remote repository",
+	Long:  "Push files in local folder to remote repository",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Info("syncing local to remote...")
 

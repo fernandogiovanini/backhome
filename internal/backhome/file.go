@@ -31,7 +31,7 @@ type Destination struct {
 func NewFile(filename string) (*File, error) {
 	path, err := utils.ResolvePath(filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve path of target %s: %w", filename, err)
+		return nil, fmt.Errorf("failed to resolve %s: %w", filename, err)
 	}
 
 	return &File{
@@ -130,8 +130,7 @@ func (fileList *FileList) CopyTo(local *Local) error {
 	}
 
 	for i, file := range fileList.Files {
-		//TODO: format this line in columns for better readability
-		fmt.Printf("%d/%d %s\t", i+1, fileList.Count(), file.path)
+		fmt.Printf("%3d/%-3d %-50s\t", i+1, fileList.Count(), file.path)
 		if err := file.CopyTo(local); err != nil {
 			fmt.Println("FAILED")
 			return fmt.Errorf("failed to copy %s to %s: %w", file.path, local.GetPath(), err)

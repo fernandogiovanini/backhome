@@ -29,7 +29,7 @@ var rootCommand = &cobra.Command{
 	Use:   "backhome",
 	Short: "CLI tool to backup text files (dot files) to a git repository",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(cmd.Help())
+		cmd.Help()
 	},
 }
 

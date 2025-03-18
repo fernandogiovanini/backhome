@@ -1,4 +1,4 @@
-# Copy target files to local then push to remote
+# Copy files to local then push to remote
 
 files:
   - file1

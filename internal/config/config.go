@@ -49,6 +49,9 @@ func LoadConfig() error {
 	viper.SetConfigName(strings.TrimSuffix(filepath.Base(configFile), filepath.Ext(configFile)))
 	viper.SetConfigType("yaml")
 
+	viper.SetDefault("files", []string{})
+	viper.SetDefault("remote", nil)
+
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("failed to read config file %s: %w", viper.ConfigFileUsed(), err)
 	}
@@ -138,4 +141,53 @@ func GetLocalPath() (string, error) {
 		return "", errors.New("local path is not set, call InitLocalPath() first")
 	}
 	return localPath, nil
+}
+
+func AddFile(filename string) error {
+	if filename == "" {
+		return errors.New("Filename cannot be empty")
+	}
+
+	path, err := utils.ResolvePath(filename)
+	if err != nil {
+		return fmt.Errorf("failed to resolve %s: %w", filename, err)
+	}
+
+	file, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("file %s does not exist", path)
+		}
+		if os.IsPermission(err) {
+			return fmt.Errorf("permission denied for %s", path)
+		}
+		return fmt.Errorf("failed to open %s: %w", path, err)
+	}
+	defer file.Close()
+
+	fileinfo, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to read %s stats: %w", path, err)
+	}
+	if fileinfo.IsDir() {
+		return fmt.Errorf("file %s is a directory", path)
+	}
+
+	for _, f := range configuration.Filenames {
+		if f == filename {
+			return fmt.Errorf("file %s already exists in config", filename)
+		}
+	}
+
+	configuration.Filenames = append(configuration.Filenames, filename)
+	viper.Set("files", configuration.Filenames)
+
+	return nil
+}
+
+func Save() error {
+	if err := viper.WriteConfig(); err != nil {
+		return fmt.Errorf("failed to write config file %s: %w", viper.ConfigFileUsed(), err)
+	}
+	return nil
 }
