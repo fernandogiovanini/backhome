@@ -1,21 +1,21 @@
-package subcmd
+package command
 
 import (
-	"github.com/fernandogiovanini/backhome/internal/logger"
+	"github.com/fernandogiovanini/backhome/internal/app"
+	"github.com/fernandogiovanini/backhome/internal/printer"
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCommand.AddCommand(syncCommand)
-}
-
-var syncCommand = &cobra.Command{
-	Use:   "sync",
-	Short: "Push changes to remote reposiitory",
-	Long:  "Push files in local folder to remote repository",
-	Run: func(cmd *cobra.Command, args []string) {
-		logger.Info("syncing local to remote...")
-
-		logger.Info("done.")
-	},
+func buildSyncCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "sync",
+		Short: "Push changes to remote reposiitory",
+		Long:  "Push files in local folder to remote repository",
+		Run: func(cmd *cobra.Command, args []string) {
+			app := app.New()
+			if err := app.Sync(); err != nil {
+				printer.Error("%v", err)
+			}
+		},
+	}
 }
