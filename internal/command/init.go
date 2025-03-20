@@ -14,7 +14,8 @@ func buildInitCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			app := app.New()
 			if err := app.Init(); err != nil {
-				printer.Error("Failed to initialize backhome local: %v", err)
+				printer.Error("Failed to initialize backhome local:\n%v", err)
+				app.Fatal("Failed to initialize backhome local: %v", err)
 			}
 		},
 	}

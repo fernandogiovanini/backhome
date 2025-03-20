@@ -2,6 +2,7 @@ package command
 
 import (
 	"github.com/fernandogiovanini/backhome/internal/app"
+	"github.com/fernandogiovanini/backhome/internal/printer"
 	"github.com/fernandogiovanini/backhome/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,10 @@ func buildAddCommand() *cobra.Command {
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			app := app.New()
+			if err := app.Add(utils.Unique(args)...); err != nil {
+				printer.Error("Failed to add files to config:\n%v", err)
+				app.Fatal("Failed to add files to config: %v", err)
+			}
 			app.Add(utils.Unique(args)...)
 		},
 	}

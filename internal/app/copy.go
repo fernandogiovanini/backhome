@@ -9,7 +9,7 @@ import (
 	"github.com/fernandogiovanini/backhome/internal/printer"
 )
 
-func (a *App) Copy() {
+func (a *App) Copy() error {
 	localPath, err := config.GetLocalPath()
 	if err != nil {
 		printer.Error("Failed to get local path:\n%v", err)
@@ -33,7 +33,7 @@ func (a *App) Copy() {
 	if len(files.Files) == 0 {
 		printer.Error("No files to copy")
 		logger.Info("no files to copy")
-		return
+		return nil
 	}
 
 	err = copyFiles(files, local)
@@ -42,6 +42,8 @@ func (a *App) Copy() {
 		logger.Fatalf("failed to copy files: %v", err)
 	}
 	fmt.Println("\nDone")
+
+	return nil
 }
 
 func copyFiles(files *backhome.FileList, local *backhome.Local) error {

@@ -27,6 +27,7 @@ func buildRootCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := cmd.Help(); err != nil {
 				printer.Error("Failed to show help message U+1F4A3 : %v", err)
+				os.Exit(1)
 			}
 		},
 	}

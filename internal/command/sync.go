@@ -15,6 +15,7 @@ func buildSyncCommand() *cobra.Command {
 			app := app.New()
 			if err := app.Sync(); err != nil {
 				printer.Error("%v", err)
+				app.Fatal("%v", err)
 			}
 		},
 	}
