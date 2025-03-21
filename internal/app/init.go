@@ -6,21 +6,16 @@ import (
 
 	"github.com/fernandogiovanini/backhome/internal/backhome"
 	"github.com/fernandogiovanini/backhome/internal/config"
-	"github.com/fernandogiovanini/backhome/internal/logger"
-	"github.com/fernandogiovanini/backhome/internal/printer"
 )
 
 func (a *App) Init() error {
 	if err := config.InitLocalPath(); err != nil {
-		printer.Error("Failed to set local path:\n%v", err)
-		logger.Fatalf("failed to set local path: %v", err)
+		return fmt.Errorf("failed to set local path: %w", err)
 	}
 
 	if config.ConfigExists() {
 		if err := config.LoadConfig(); err != nil {
-			printer.Error("Failed to load config file:\n%v", err)
-			logger.Fatalf("failed to load config file: %v", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to load config file: %w", err)
 		}
 
 		message := "\n" +
@@ -33,26 +28,22 @@ func (a *App) Init() error {
 	fmt.Print("Initializing local repository... ")
 
 	if err := setupLocalRepository(); err != nil {
-		printer.Error("Failed to load config file:\n%v", err)
-		logger.Fatalf("failed to setup local repository: %v", err)
+		return fmt.Errorf("failed to setup local repository: %w", err)
 	}
 
 	if err := setupConfig(); err != nil {
-		printer.Error("Failed to set up config file:\n%v", err)
-		logger.Fatalf("failed to set up config file: %v", err)
+		return fmt.Errorf("failed to set up config file: %w", err)
 	}
 
 	if err := config.LoadConfig(); err != nil {
-		printer.Error("Failed to load config file:\n%v", err)
-		logger.Fatalf("failed to load config file: %v", err)
+		return fmt.Errorf("failed to load config file: %w", err)
 	}
 
 	fmt.Println("Done.")
 
 	localPath, err := config.GetLocalPath()
 	if err != nil {
-		printer.Error("Failed to get local path:\n%v", err)
-		logger.Fatalf("failed to get local path: %v", err)
+		return fmt.Errorf("failed to get local path: %w", err)
 	}
 
 	message := "\n" +
