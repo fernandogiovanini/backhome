@@ -1,5 +1,7 @@
 # Backhome
 
+![CI Build](https://github.com/fernandogiovanini/backhome/actions/workflows/build.yml/badge.svg)
+
 This cli tool serve two purposes: learning golang and a simple backup tool for my configuration files.
 
 It reads a `.backhome.yaml` (default to `$HOME/.backhome.yaml`), copy `files` to local git repository.
