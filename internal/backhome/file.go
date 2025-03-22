@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fernandogiovanini/backhome/internal/logger"
 	"github.com/fernandogiovanini/backhome/internal/utils"
 )
 
@@ -41,11 +40,7 @@ func NewFile(filename string) (*File, error) {
 
 // CopyTo copies the file to the destination
 // The destination is created based on the [Local.path]
-func (file *File) CopyTo(local *Local) error {
-	if local == nil {
-		return errors.New("nil pointer: Local is not initialized")
-	}
-
+func (file File) CopyTo(local *Local) error {
 	destination, err := file.NewDestination(local)
 	if err != nil {
 		return fmt.Errorf("failed to create destination for %s: %w", file.path, err)
@@ -76,16 +71,10 @@ func (file *File) CopyTo(local *Local) error {
 		return fmt.Errorf("failed to sync %s: %w", dstFile.Name(), er)
 	}
 
-	logger.Debug("copied %s to %s", file.path, destination.path)
-
 	return nil
 }
 
-func (file *File) NewDestination(local *Local) (*Destination, error) {
-	if local == nil {
-		return nil, errors.New("nil pointer: Local is not initialized")
-	}
-
+func (file File) NewDestination(local *Local) (*Destination, error) {
 	if local.GetPath() == "" {
 		return nil, errors.New("invalid destination: local.BasePath is empty")
 	}
@@ -124,11 +113,7 @@ func NewFileList(filenames []string) (*FileList, error) {
 	return fileList, nil
 }
 
-func (fileList *FileList) CopyTo(local *Local) error {
-	if local == nil {
-		return errors.New("nil pointer: Local is not initialized")
-	}
-
+func (fileList FileList) CopyTo(local *Local) error {
 	for i, file := range fileList.Files {
 		fmt.Printf("%3d/%-3d %-50s\t", i+1, fileList.Count(), file.path)
 		if err := file.CopyTo(local); err != nil {
@@ -138,10 +123,9 @@ func (fileList *FileList) CopyTo(local *Local) error {
 		fmt.Printf("OK (%.2f%%)\n", float64(i+1)/float64(fileList.Count())*100)
 	}
 
-	logger.Debug("copied %d files to %s", len(fileList.Files), local.GetPath())
-
 	return nil
 }
-func (fileList *FileList) Count() int {
+
+func (fileList FileList) Count() int {
 	return len(fileList.Files)
 }

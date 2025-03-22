@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/fernandogiovanini/backhome/internal/logger"
 )
 
 func ExpandHome(path string) string {
@@ -15,7 +13,6 @@ func ExpandHome(path string) string {
 	}
 	home, _ := os.UserHomeDir()
 	expanded := filepath.Join(home, path[2:])
-	logger.Debug("path %s expanded to %s", path, expanded)
 	return expanded
 }
 
@@ -25,6 +22,6 @@ func ResolvePath(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("path %s cannot be resolved: %w", path, err)
 	}
-	logger.Debug("path %s resolved to %s", path, resolved)
+
 	return resolved, nil
 }

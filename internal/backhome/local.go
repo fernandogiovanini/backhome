@@ -43,11 +43,11 @@ func MakeLocal(path string) (*Local, error) {
 	return NewLocal(path)
 }
 
-func (local *Local) GetPath() string {
+func (local Local) GetPath() string {
 	return local.path
 }
 
-func (local *Local) prepareForRestoring() error {
+func (local Local) prepareForRestoring() error {
 	if err := filepath.Walk(local.path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("failed to walk path %s to remove files: %w", path, err)
@@ -68,7 +68,7 @@ func (local *Local) prepareForRestoring() error {
 }
 
 // NewSafeCopy creates a new safe copy of the local repository
-func (local *Local) NewSafeCopy() (*SafeCopy, error) {
+func (local Local) NewSafeCopy() (*SafeCopy, error) {
 	destinationPath := strings.Join([]string{local.path, "backhome"}, ".")
 
 	options := copy.Options{

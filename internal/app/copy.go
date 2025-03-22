@@ -4,18 +4,16 @@ import (
 	"fmt"
 
 	"github.com/fernandogiovanini/backhome/internal/backhome"
-	"github.com/fernandogiovanini/backhome/internal/config"
 	"github.com/fernandogiovanini/backhome/internal/logger"
 	"github.com/fernandogiovanini/backhome/internal/printer"
 )
 
 func (a *App) Copy() error {
-	localPath, err := config.GetLocalPath()
+	localPath, err := a.config.GetLocalPath()
 	if err != nil {
 		return fmt.Errorf("failed to get local path %s: %w", localPath, err)
 	}
 
-	logger.Info("copying files on %s to %s", config.GetFilenames(), localPath)
 	fmt.Printf("Copying files to %s\n\n", localPath)
 
 	local, err := backhome.NewLocal(localPath)
@@ -23,7 +21,7 @@ func (a *App) Copy() error {
 		return fmt.Errorf("failed to open local repository %s: %v", localPath, err)
 	}
 
-	files, err := backhome.NewFileList(config.GetFilenames())
+	files, err := backhome.NewFileList(a.config.GetFilenames())
 	if err != nil {
 		return fmt.Errorf("failed to get the list of files: %v", err)
 	}

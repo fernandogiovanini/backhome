@@ -1,15 +1,20 @@
 package app
 
-import "github.com/fernandogiovanini/backhome/internal/logger"
+import (
+	"github.com/fernandogiovanini/backhome/internal/config"
+)
 
-type App struct{}
-
-func New() *App {
-	return &App{}
+type App struct {
+	config *config.Config
 }
 
-// Fatal calls logger.Fatal but it should
-// call a.logger.Fatal() when we do DI on New
-func (a *App) Fatal(msg string, args ...any) {
-	logger.Fatalf(msg, args...)
+func New() (*App, error) {
+	config, err := config.InitConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return &App{
+		config: config,
+	}, nil
 }

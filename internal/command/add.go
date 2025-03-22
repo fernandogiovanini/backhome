@@ -1,13 +1,14 @@
 package command
 
 import (
+	"fmt"
+
 	"github.com/fernandogiovanini/backhome/internal/app"
-	"github.com/fernandogiovanini/backhome/internal/printer"
 	"github.com/fernandogiovanini/backhome/internal/utils"
 	"github.com/spf13/cobra"
 )
 
-func buildAddCommand() *cobra.Command {
+func buildAddCommand(newApp func() (*app.App, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "add <file> <file> ...",
 		Short: "Set files to be copied to the local repository",
@@ -16,13 +17,17 @@ func buildAddCommand() *cobra.Command {
 			"backhome copy --local path/to/local \n\n" +
 			"To add a file with spaces in the name, use quotes. For example: backhome add 'my file.txt'",
 		Args: cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			app := app.New()
-			if err := app.Add(utils.Unique(args)...); err != nil {
-				printer.Error("Failed to add files to config:\n%v", err)
-				app.Fatal("Failed to add files to config: %v", err)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			app, err := newApp()
+			if err != nil {
+				return err
 			}
-			app.Add(utils.Unique(args)...)
+
+			if err := app.Add(utils.Unique(args)...); err != nil {
+				return fmt.Errorf("failed to add files to config: %w", err)
+			}
+
+			return nil
 		},
 	}
 }

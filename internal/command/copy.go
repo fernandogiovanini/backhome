@@ -6,17 +6,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildCopyCommand() *cobra.Command {
+func buildCopyCommand(newApp func() (*app.App, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "copy",
 		Short: "Copy files",
 		Long:  "Copy files to local repository, replacing files on destination",
-		Run: func(cmd *cobra.Command, args []string) {
-			app := app.New()
-			if err := app.Copy(); err != nil {
-				printer.Error("Failed to copy files:\n%v", err)
-				app.Fatal("Failed to copy files: %v", err)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			app, err := newApp()
+			if err != nil {
+				return err
 			}
+
+			if err := app.Copy(); err != nil {
+				printer.Error("Failed to copy files: %v", err)
+			}
+			return nil
 		},
 	}
 }

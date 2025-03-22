@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fernandogiovanini/backhome/internal/logger"
 	"github.com/otiai10/copy"
 )
 
@@ -13,14 +12,10 @@ import (
 // The path is the directory where the files are copied
 type SafeCopy struct {
 	path  string
-	local *Local
+	local Local
 }
 
-func (safeCopy *SafeCopy) Delete() error {
-	if safeCopy == nil {
-		return errors.New("nil pointer: SafeCopy is not initialized")
-	}
-
+func (safeCopy SafeCopy) Delete() error {
 	if safeCopy.path == "" {
 		return errors.New("safe copy path is empty")
 	}
@@ -33,10 +28,6 @@ func (safeCopy *SafeCopy) Delete() error {
 }
 
 func RestoreSafeCopy(safeCopy *SafeCopy) error {
-	if safeCopy == nil {
-		return errors.New("nil pointer: SafeCopy is not initialized")
-	}
-
 	if err := safeCopy.Restore(); err != nil {
 		return fmt.Errorf("failed to restore safe copy from %s to %s: %w", safeCopy.path, safeCopy.local, err)
 	}
@@ -45,22 +36,12 @@ func RestoreSafeCopy(safeCopy *SafeCopy) error {
 		return fmt.Errorf("failed to delete safe copy at %s: %w", safeCopy.path, err)
 	}
 
-	logger.Debug("safe copy restored from %s to %s and deleted", safeCopy.path, safeCopy.local)
-
 	return nil
 }
 
-func (safeCopy *SafeCopy) Restore() error {
-	if safeCopy == nil {
-		return errors.New("nil pointer: SafeCopy is not initialized")
-	}
-
+func (safeCopy SafeCopy) Restore() error {
 	if safeCopy.path == "" {
 		return errors.New("safe copy path is empty")
-	}
-
-	if safeCopy.local == nil {
-		return errors.New("nil pointer: Local is not initialized")
 	}
 
 	if err := safeCopy.local.prepareForRestoring(); err != nil {
@@ -77,15 +58,9 @@ func (safeCopy *SafeCopy) Restore() error {
 		return fmt.Errorf("failed to copy local %s to safe copy %s dir: %w", safeCopy.path, safeCopy.local, err)
 	}
 
-	logger.Debug("safe copy %s restored to %s", safeCopy.path, safeCopy.local)
-
 	return nil
 }
 
-func (safeCopy *SafeCopy) GetPath() string {
-	if safeCopy == nil {
-		return ""
-	}
-
+func (safeCopy SafeCopy) GetPath() string {
 	return safeCopy.path
 }
