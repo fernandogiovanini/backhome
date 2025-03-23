@@ -1,11 +1,19 @@
-build:
-	go build -o backhome ./cmd/backhome
+ci: vet lint test build
 
-install:
-	go install ./cmd/backhome
+vet:
+	go vet ./...	
 
 lint:
 	golangci-lint run ./...
+
+test:
+	go test ./...
+
+build:
+	go build -o build/backhome ./cmd/backhome
+
+install:
+	go install ./cmd/backhome
 
 clear:
 	rm -rf ./local/

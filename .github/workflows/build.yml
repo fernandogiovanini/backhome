@@ -21,9 +21,12 @@ jobs:
       with:
         go-version: '1.24'
 
+    - name: Run vet
+      run: |
+        go vet ./...
+
+    - name: Test
+      run: go test -v ./...
+
     - name: Build
       run: go build -v ./...
-
-# NOT IMPLEMENTED YET
-#    - name: Test
-#      run: go test -v ./...

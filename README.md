@@ -1,6 +1,8 @@
 # Backhome
 
-![CI Build](https://github.com/fernandogiovanini/backhome/actions/workflows/build.yml/badge.svg)
+![Build](https://github.com/fernandogiovanini/backhome/actions/workflows/build.yml/badge.svg)
+![Lint](https://github.com/fernandogiovanini/backhome/actions/workflows/lint.yml/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/fernandogiovanini/backhome)](https://goreportcard.com/report/github.com/fernandogiovanini/backhome)
 
 This CLI tool serves two purposes for me: learning Golang and acting as a simple backup tool for my configuration files (mostly dotfiles).
 
@@ -36,3 +38,4 @@ Features to add:
  - [ ] Support to multiple environments (work and home)
  - [ ] Better error handling (use typed error to decide how to print message)
  - [ ] Interactive init procedure (check if `local` and config file exist and ask if user wants to create before doing so) 
+ - [ ] Add code coverage report
