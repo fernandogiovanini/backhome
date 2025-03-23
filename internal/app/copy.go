@@ -5,7 +5,6 @@ import (
 
 	"github.com/fernandogiovanini/backhome/internal/backhome"
 	"github.com/fernandogiovanini/backhome/internal/logger"
-	"github.com/fernandogiovanini/backhome/internal/printer"
 )
 
 func (a *App) Copy() error {
@@ -14,7 +13,7 @@ func (a *App) Copy() error {
 		return fmt.Errorf("failed to get local path %s: %w", localPath, err)
 	}
 
-	fmt.Printf("Copying files to %s\n\n", localPath)
+	fmt.Fprintf(a.output, "Copying files to %s\n\n", localPath)
 
 	local, err := backhome.NewLocal(localPath)
 	if err != nil {
@@ -27,21 +26,21 @@ func (a *App) Copy() error {
 	}
 
 	if len(files.Files) == 0 {
-		fmt.Println("No files to copy")
+		fmt.Fprintln(a.output, "No files to copy")
 		return nil
 	}
 
-	err = copyFiles(files, local)
+	err = copyFiles(a, files, local)
 	if err != nil {
 		return fmt.Errorf("failed to copy files: %w", err)
 	}
 
-	fmt.Println("\nDone")
+	fmt.Fprint(a.output, "\nDone")
 
 	return nil
 }
 
-func copyFiles(files *backhome.FileList, local *backhome.Local) error {
+func copyFiles(a *App, files *backhome.FileList, local *backhome.Local) error {
 	safeCopy, err := local.NewSafeCopy()
 	if err != nil {
 		return fmt.Errorf("failed to create safe copy: %v", err)
@@ -49,16 +48,17 @@ func copyFiles(files *backhome.FileList, local *backhome.Local) error {
 
 	if err := files.CopyTo(local); err != nil {
 		if err := backhome.RestoreSafeCopy(safeCopy); err != nil {
-			logger.Err("failed to restore safe copy: %v", err)
+			a.Error("Failed to restore safe copy: %v", err)
 		}
 		return fmt.Errorf("failed to copy file to %s:\n%v", local.GetPath(), err)
 	}
 
 	// failing to delete the safe copy is not a fatal error
 	if err := safeCopy.Delete(); err != nil {
-		// TODO: It feels like this printer shouldn't be here
-		// Maybe just call sdtout.Print?
-		printer.Error("Failed to delete safe copy. Check log file at %s for more informarion", logger.GetLogFile())
+		a.Error(
+			"Failed to delete safe copy. Check log file at %s for more informarion",
+			logger.GetLogFile(),
+		)
 		logger.Err("failed to delete safe copy: %v", err)
 	}
 

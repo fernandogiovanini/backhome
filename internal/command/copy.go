@@ -2,7 +2,6 @@ package command
 
 import (
 	"github.com/fernandogiovanini/backhome/internal/app"
-	"github.com/fernandogiovanini/backhome/internal/printer"
 	"github.com/spf13/cobra"
 )
 
@@ -18,8 +17,9 @@ func buildCopyCommand(newApp func(string) (*app.App, error)) *cobra.Command {
 			}
 
 			if err := app.Copy(); err != nil {
-				printer.Error("Failed to copy files: %v", err)
+				app.Error("Failed to copy files: %v", err)
 			}
+
 			return nil
 		},
 	}

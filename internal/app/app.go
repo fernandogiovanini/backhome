@@ -2,13 +2,17 @@ package app
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"os"
 
 	"github.com/fernandogiovanini/backhome/internal/config"
 	"github.com/spf13/viper"
 )
 
 type App struct {
-	config *config.Config
+	config config.IConfig
+	output io.Writer
 }
 
 func New(command string) (*App, error) {
@@ -27,5 +31,10 @@ func New(command string) (*App, error) {
 
 	return &App{
 		config: config,
+		output: os.Stdout,
 	}, nil
+}
+
+func (a *App) Error(message string, args ...any) {
+	fmt.Fprintf(a.output, "\nERROR! %s\n", fmt.Sprintf(message, args...))
 }

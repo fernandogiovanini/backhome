@@ -5,7 +5,7 @@ import (
 )
 
 func (a *App) Init() error {
-	fmt.Print("Initializing local repository... \n")
+	fmt.Fprintf(a.output, "Initializing local repository... \n")
 
 	if err := a.config.MakeLocalRepository(); err != nil {
 		return fmt.Errorf("failed to setup local repository: %w", err)
@@ -18,8 +18,8 @@ func (a *App) Init() error {
 	localPath, _ := a.config.GetLocalPath()
 	message := "\n" +
 		"Local repository initialized at %s\n" +
-		"Run 'backhome help' for more commands\n\n"
-	fmt.Printf(message, localPath)
+		"Run 'backhome help' for more commands"
+	fmt.Fprintf(a.output, message, localPath)
 
 	return nil
 }

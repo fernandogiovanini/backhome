@@ -1,10 +1,11 @@
 package logger
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"strings"
 
-	"github.com/fernandogiovanini/backhome/internal/printer"
 	"github.com/op/go-logging"
 )
 
@@ -19,7 +20,7 @@ const LOG_FILE = ".backhome.log"
 func InitLogger() {
 	logfile, err := os.OpenFile(getLogFile(), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		printer.Error("Failed to open log file: %v", err)
+		fmt.Fprintf(os.Stdout, "Failed to open log file: %v", err)
 	} else {
 		logging.SetBackend(logging.NewLogBackend(logfile, "", 0))
 		isLogFileSet = true
@@ -43,6 +44,7 @@ func InitLogger() {
 }
 
 func Info(msg string, args ...any) {
+	log.Default()
 	logger.Infof(msg, args...)
 }
 

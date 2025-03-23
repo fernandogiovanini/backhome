@@ -21,6 +21,17 @@ var (
 	LocalPath string
 )
 
+type IConfig interface {
+	CreateConfigFile() error
+	GetConfigFilePath() string
+	GetFilenames() []string
+	GetRemote() string
+	GetLocalPath() (string, error)
+	AddFile(filename string) error
+	Save() error
+	MakeLocalRepository() error
+}
+
 type Config struct {
 	Filenames []string `mapstructure:"files"`
 	Remote    string   `mapstructure:"remote"`

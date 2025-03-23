@@ -17,7 +17,7 @@ func TestExpandHome(t *testing.T) {
 	assert.Equal(t, output, strings.Join([]string{homeDir, "file"}, string(os.PathSeparator)))
 }
 
-func TestDONotExpandHome(t *testing.T) {
+func TestDoNotExpandHome(t *testing.T) {
 	input := "/dir/file"
 
 	output := ExpandHome(input)
