@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildRootCommand(newApp func() (*app.App, error)) *cobra.Command {
+func buildRootCommand(newApp func(string) (*app.App, error)) *cobra.Command {
 	cobra.OnInitialize(func() {
 		logger.InitLogger()
 	})

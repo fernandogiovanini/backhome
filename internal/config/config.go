@@ -49,12 +49,7 @@ func InitConfig() (*Config, error) {
 	viper.SetDefault("remote", nil)
 
 	if err := viper.ReadInConfig(); err != nil {
-		if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-			return nil, fmt.Errorf("failed to read config file %s: %w", viper.ConfigFileUsed(), err)
-		}
-		if err := config.initConfig(); err != nil {
-			return nil, fmt.Errorf("failed to initialize config file %s: %w", viper.ConfigFileUsed(), err)
-		}
+		return config, fmt.Errorf("failed to read config file: %w", err)
 	}
 
 	if err := viper.UnmarshalExact(&config); err != nil {
@@ -86,43 +81,6 @@ func (c *Config) initConfigPath(configFilename string) error {
 		return fmt.Errorf("failed to resolve config file path: %w", err)
 	}
 	c.configFile = configPath
-
-	return nil
-}
-
-func (c Config) initConfig() error {
-	fmt.Print("Initializing local repository... \n")
-
-	if err := c.makeLocalRepository(); err != nil {
-		return fmt.Errorf("failed to setup local repository: %w", err)
-	}
-
-	if err := c.createConfigFile(); err != nil {
-		return fmt.Errorf("failed to set up config file: %w", err)
-	}
-
-	message := "\n" +
-		"Local repository initialized at %s\n" +
-		"Run 'backhome help' for more commands\n\n"
-	fmt.Printf(message, c.localPath)
-
-	return nil
-}
-
-func (c Config) makeLocalRepository() error {
-	if _, err := backhome.MakeLocal(c.localPath); err != nil {
-		return fmt.Errorf("failed to create local repository %s: %w", c.localPath, err)
-	}
-
-	return nil
-}
-
-func (c Config) createConfigFile() error {
-	file, err := os.OpenFile(c.configFile, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		return fmt.Errorf("failed to create config file %s: %w", c.configFile, err)
-	}
-	defer file.Close()
 
 	return nil
 }
@@ -198,6 +156,24 @@ func (c Config) Save() error {
 	if err := viper.WriteConfig(); err != nil {
 		return fmt.Errorf("failed to write config file %s: %w", viper.ConfigFileUsed(), err)
 	}
+	return nil
+}
+
+func (c Config) MakeLocalRepository() error {
+	if _, err := backhome.MakeLocal(c.localPath); err != nil {
+		return fmt.Errorf("failed to create local repository %s: %w", c.localPath, err)
+	}
+
+	return nil
+}
+
+func (c Config) CreateConfigFile() error {
+	file, err := os.OpenFile(c.configFile, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return fmt.Errorf("failed to create config file %s: %w", c.configFile, err)
+	}
+	defer file.Close()
+
 	return nil
 }
 

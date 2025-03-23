@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildAddCommand(newApp func() (*app.App, error)) *cobra.Command {
+func buildAddCommand(newApp func(string) (*app.App, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "add <file> <file> ...",
 		Short: "Set files to be copied to the local repository",
@@ -18,7 +18,7 @@ func buildAddCommand(newApp func() (*app.App, error)) *cobra.Command {
 			"To add a file with spaces in the name, use quotes. For example: backhome add 'my file.txt'",
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			app, err := newApp()
+			app, err := newApp(cmd.CalledAs())
 			if err != nil {
 				return err
 			}

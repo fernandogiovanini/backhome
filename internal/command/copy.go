@@ -6,13 +6,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildCopyCommand(newApp func() (*app.App, error)) *cobra.Command {
+func buildCopyCommand(newApp func(string) (*app.App, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "copy",
 		Short: "Copy files",
 		Long:  "Copy files to local repository, replacing files on destination",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			app, err := newApp()
+			app, err := newApp(cmd.CalledAs())
 			if err != nil {
 				return err
 			}

@@ -8,6 +8,13 @@ It copies the selected files to a local folder and then pushes it to a Github re
 
 When executed for the first time it creates a `local` repository (defaults to `$HOME/backhome`) with a `backhome.yaml` in it.
 
+Setting `--local` initialize the `local` repository in another folder.
+
+To initilize backhome
+```
+backhome init
+```
+
 To add a file to config file
 ```
 backhome add path/to/file1 path/to/file2 ...
@@ -17,9 +24,6 @@ To copy files in config file to `local`
 ```
 backhome copy
 ```
-
-Setting `--local` initialize the `local` repository in another local.
-
 
 **Github remotes are still to be implemented**
 
