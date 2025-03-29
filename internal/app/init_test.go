@@ -25,7 +25,7 @@ func TestInit(t *testing.T) {
 	buffer := &bytes.Buffer{}
 	app := &App{
 		config: config,
-		output: buffer,
+		writer: buffer,
 	}
 
 	result := app.Init()
@@ -42,7 +42,7 @@ func TestInitShouldFailToMakeLocalRepository(t *testing.T) {
 	buffer := &bytes.Buffer{}
 	app := &App{
 		config: config,
-		output: buffer,
+		writer: buffer,
 	}
 
 	result := app.Init()
@@ -61,7 +61,7 @@ func TestInitShouldFailToCreateConfigFile(t *testing.T) {
 	buffer := &bytes.Buffer{}
 	app := &App{
 		config: config,
-		output: buffer,
+		writer: buffer,
 	}
 
 	result := app.Init()

@@ -12,7 +12,7 @@ import (
 
 type App struct {
 	config config.IConfig
-	output io.Writer
+	writer io.Writer
 }
 
 func New(command string) (*App, error) {
@@ -31,10 +31,10 @@ func New(command string) (*App, error) {
 
 	return &App{
 		config: config,
-		output: os.Stdout,
+		writer: os.Stdout,
 	}, nil
 }
 
 func (a *App) Error(message string, args ...any) {
-	fmt.Fprintf(a.output, "\nERROR! %s\n", fmt.Sprintf(message, args...))
+	fmt.Fprintf(a.writer, "\nERROR! %s\n", fmt.Sprintf(message, args...))
 }

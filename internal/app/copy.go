@@ -13,7 +13,7 @@ func (a *App) Copy() error {
 		return fmt.Errorf("failed to get local path %s: %w", localPath, err)
 	}
 
-	fmt.Fprintf(a.output, "Copying files to %s\n\n", localPath)
+	fmt.Fprintf(a.writer, "Copying files to %s\n\n", localPath)
 
 	local, err := backhome.NewLocal(localPath)
 	if err != nil {
@@ -26,7 +26,7 @@ func (a *App) Copy() error {
 	}
 
 	if len(files.Files) == 0 {
-		fmt.Fprintln(a.output, "No files to copy")
+		fmt.Fprintln(a.writer, "No files to copy")
 		return nil
 	}
 
@@ -35,7 +35,7 @@ func (a *App) Copy() error {
 		return fmt.Errorf("failed to copy files: %w", err)
 	}
 
-	fmt.Fprint(a.output, "\nDone")
+	fmt.Fprint(a.writer, "\nDone")
 
 	return nil
 }
