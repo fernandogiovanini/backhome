@@ -9,7 +9,7 @@ import (
 )
 
 func TestError(t *testing.T) {
-	config := &mocks.ConfigI{}
+	config := &mocks.IConfig{}
 	config.On("dsa")
 	buffer := &bytes.Buffer{}
 	app := &App{

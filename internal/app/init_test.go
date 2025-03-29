@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newConfigIMock() *mocks.ConfigI {
-	return &mocks.ConfigI{}
+func newConfigIMock() *mocks.IConfig {
+	return &mocks.IConfig{}
 }
 
 func TestInit(t *testing.T) {
