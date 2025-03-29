@@ -18,6 +18,3 @@ install:
 clear:
 	rm -rf ./local/
 	rm -rf ./local.backhome/
-
-test:
-	go test ./...
