@@ -5,27 +5,29 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/fernandogiovanini/backhome/internal/config/mocks"
+	"github.com/fernandogiovanini/backhome/internal/config"
+	cfgmock "github.com/fernandogiovanini/backhome/internal/config/mocks"
+	fsmock "github.com/fernandogiovanini/backhome/internal/filesystem/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
-func newConfigIMock() *mocks.IConfig {
-	return &mocks.IConfig{}
+func newFileSystemMock() *fsmock.FileSystem {
+	return &fsmock.FileSystem{}
 }
 
 func TestInit(t *testing.T) {
-	config := newConfigIMock()
-	config.
-		On("MakeLocalRepository").
-		Return(nil).
-		On("CreateConfigFile").
-		Return(nil).
-		On("GetLocalPath").
-		Return("/the/local/path", nil)
+	filesystem := newFileSystemMock()
+	cfg, _ := config.NewConfig("/the/local/path", config.DefaultConfigFilename)
+	configStorage := cfgmock.NewConfigStorage(t)
+	configStorage.
+		On("MakeLocalRepository").Return(nil).
+		On("CreateConfigFile").Return(nil).
+		On("GetConfig").Return(cfg)
 	buffer := &bytes.Buffer{}
 	app := &App{
-		config: config,
-		writer: buffer,
+		configStorage: configStorage,
+		filesystem:    filesystem,
+		writer:        buffer,
 	}
 
 	result := app.Init()
@@ -35,14 +37,14 @@ func TestInit(t *testing.T) {
 }
 
 func TestInitShouldFailToMakeLocalRepository(t *testing.T) {
-	config := newConfigIMock()
-	config.
-		On("MakeLocalRepository").
-		Return(errors.New("failed to make local repository"))
+	filesystem := newFileSystemMock()
+	configStorage := cfgmock.NewConfigStorage(t)
+	configStorage.On("MakeLocalRepository").Return(errors.New("failed to make local repository"))
 	buffer := &bytes.Buffer{}
 	app := &App{
-		config: config,
-		writer: buffer,
+		configStorage: configStorage,
+		filesystem:    filesystem,
+		writer:        buffer,
 	}
 
 	result := app.Init()
@@ -52,16 +54,16 @@ func TestInitShouldFailToMakeLocalRepository(t *testing.T) {
 }
 
 func TestInitShouldFailToCreateConfigFile(t *testing.T) {
-	config := newConfigIMock()
-	config.
-		On("MakeLocalRepository").
-		Return(nil).
-		On("CreateConfigFile").
-		Return(errors.New("failed to create config file"))
+	filesystem := newFileSystemMock()
+	configStorage := cfgmock.NewConfigStorage(t)
+	configStorage.
+		On("MakeLocalRepository").Return(nil).
+		On("CreateConfigFile").Return(errors.New("failed to create config file"))
 	buffer := &bytes.Buffer{}
 	app := &App{
-		config: config,
-		writer: buffer,
+		configStorage: configStorage,
+		filesystem:    filesystem,
+		writer:        buffer,
 	}
 
 	result := app.Init()

@@ -4,17 +4,19 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/fernandogiovanini/backhome/internal/config/mocks"
+	cfgmock "github.com/fernandogiovanini/backhome/internal/config/mocks"
+	fsmock "github.com/fernandogiovanini/backhome/internal/filesystem/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestError(t *testing.T) {
-	config := &mocks.IConfig{}
-	config.On("dsa")
+	filesystem := &fsmock.FileSystem{}
+	configStorage := &cfgmock.ConfigStorage{}
 	buffer := &bytes.Buffer{}
 	app := &App{
-		config: config,
-		writer: buffer,
+		configStorage: configStorage,
+		filesystem:    filesystem,
+		writer:        buffer,
 	}
 
 	app.Error("string %s", "value")

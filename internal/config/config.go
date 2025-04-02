@@ -1,3 +1,5 @@
+//go:generate mockery --all --case snake
+
 package config
 
 import (
@@ -7,13 +9,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fernandogiovanini/backhome/internal/backhome"
+	"slices"
+
+	"github.com/fernandogiovanini/backhome/internal/filesystem"
 	"github.com/fernandogiovanini/backhome/internal/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-const defaultConfigFilename = "backhome.yaml"
+const DefaultConfigFilename = "backhome.yaml"
 
 var (
 	// LocalPath is public so it can be set by cobra command flags
@@ -21,18 +25,28 @@ var (
 	LocalPath string
 )
 
-type IConfig interface {
+type ConfigStorage interface {
+	AddFile(filename string) error
 	CreateConfigFile() error
+	GetConfig() *ConfigData
+	MakeLocalRepository() error
+	Save() error
+}
+
+type configStorage struct {
+	fs  filesystem.FileSystem
+	cfg *ConfigData
+	v   *viper.Viper
+}
+
+type Config interface {
 	GetConfigFilePath() string
 	GetFilenames() []string
 	GetRemote() string
 	GetLocalPath() (string, error)
-	AddFile(filename string) error
-	Save() error
-	MakeLocalRepository() error
 }
 
-type Config struct {
+type ConfigData struct {
 	Filenames []string `mapstructure:"files"`
 	Remote    string   `mapstructure:"remote"`
 
@@ -40,88 +54,42 @@ type Config struct {
 	configFile string
 }
 
-func InitConfig() (*Config, error) {
-	config := &Config{}
-
-	if err := config.initLocalPath(LocalPath); err != nil {
-		return nil, fmt.Errorf("failed to set local path: %w", err)
-	}
-
-	if err := config.initConfigPath(defaultConfigFilename); err != nil {
-		return nil, fmt.Errorf("failed to set local path: %w", err)
-	}
-
-	viper.AddConfigPath(filepath.Dir(config.configFile))
-
-	viper.SetConfigName(strings.TrimSuffix(filepath.Base(config.configFile), filepath.Ext(config.configFile)))
-	viper.SetConfigType("yaml")
-
-	viper.SetDefault("files", []string{})
-	viper.SetDefault("remote", nil)
-
-	if err := viper.ReadInConfig(); err != nil {
-		return config, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	if err := viper.UnmarshalExact(&config); err != nil {
-		return nil, fmt.Errorf("invalid config file %s: %w", viper.ConfigFileUsed(), err)
-	}
-
-	return config, nil
-}
-
-func (c *Config) initLocalPath(localPath string) error {
-	if localPath == "" {
-		return errors.New("local path cannot be empty")
-	}
-
-	localPath, err := utils.ResolvePath(localPath)
+func NewConfigStorage(
+	localPath string,
+	cfgFilename string,
+	fs filesystem.FileSystem,
+	v *viper.Viper) (*configStorage, error) {
+	cfg, err := NewConfig(LocalPath, cfgFilename)
 	if err != nil {
-		return fmt.Errorf("failed to resolve local path %s: %w", localPath, err)
+		return nil, err
 	}
-	c.localPath = localPath
 
-	return nil
-}
-
-func (c *Config) initConfigPath(configFilename string) error {
-	configPath, err := filepath.Abs(
-		strings.Join([]string{c.localPath, configFilename}, string(os.PathSeparator)),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to resolve config file path: %w", err)
+	configStorage := &configStorage{
+		cfg: cfg,
+		fs:  fs,
+		v:   v,
 	}
-	c.configFile = configPath
 
-	return nil
-}
+	v.AddConfigPath(filepath.Dir(cfg.GetConfigFilePath()))
 
-func (c Config) GetConfigFilePath() string {
-	return c.configFile
-}
+	v.SetConfigName(strings.TrimSuffix(filepath.Base(cfg.GetConfigFilePath()), filepath.Ext(cfg.GetConfigFilePath())))
+	v.SetConfigType("yaml")
 
-func (c Config) GetFilenames() []string {
-	if c.Filenames == nil {
-		return []string{}
+	v.SetDefault("files", []string{})
+	v.SetDefault("remote", nil)
+
+	if err := v.ReadInConfig(); err != nil {
+		return configStorage, fmt.Errorf("failed to read config file: %w", err)
 	}
-	return c.Filenames
-}
 
-func (c Config) GetRemote() string {
-	if c.Remote == "" {
-		return ""
+	if err := v.UnmarshalExact(&cfg); err != nil {
+		return nil, fmt.Errorf("invalid config file %s: %w", v.ConfigFileUsed(), err)
 	}
-	return c.Remote
+
+	return configStorage, nil
 }
 
-func (c Config) GetLocalPath() (string, error) {
-	if c.localPath == "" {
-		return "", errors.New("local path is not set, call InitLocalPath() first")
-	}
-	return c.localPath, nil
-}
-
-func (c *Config) AddFile(filename string) error {
+func (cs *configStorage) AddFile(filename string) error {
 	if filename == "" {
 		return errors.New("ilename cannot be empty")
 	}
@@ -131,12 +99,12 @@ func (c *Config) AddFile(filename string) error {
 		return fmt.Errorf("failed to resolve %s: %w", filename, err)
 	}
 
-	file, err := os.Open(path)
+	file, err := cs.fs.Open(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if cs.fs.IsNotExist(err) {
 			return fmt.Errorf("file %s does not exist", path)
 		}
-		if os.IsPermission(err) {
+		if cs.fs.IsPermission(err) {
 			return fmt.Errorf("permission denied for %s", path)
 		}
 		return fmt.Errorf("failed to open %s: %w", path, err)
@@ -151,41 +119,111 @@ func (c *Config) AddFile(filename string) error {
 		return fmt.Errorf("file %s is a directory", path)
 	}
 
-	for _, f := range c.Filenames {
-		if f == filename {
-			return fmt.Errorf("file %s already exists in config", filename)
-		}
+	if slices.Contains(cs.cfg.GetFilenames(), filename) {
+		return fmt.Errorf("file %s already exists in config", filename)
 	}
 
-	c.Filenames = append(c.Filenames, filename)
-	viper.Set("files", c.Filenames)
+	filenames := append(cs.cfg.GetFilenames(), filename)
+	cs.v.Set("files", filenames)
 
 	return nil
 }
 
-func (c Config) Save() error {
-	if err := viper.WriteConfig(); err != nil {
+func (cs *configStorage) GetConfig() *ConfigData {
+	return cs.cfg
+}
+
+func (cs configStorage) Save() error {
+	if err := cs.v.WriteConfig(); err != nil {
 		return fmt.Errorf("failed to write config file %s: %w", viper.ConfigFileUsed(), err)
 	}
 	return nil
 }
 
-func (c Config) MakeLocalRepository() error {
-	if _, err := backhome.MakeLocal(c.localPath); err != nil {
-		return fmt.Errorf("failed to create local repository %s: %w", c.localPath, err)
+func (cs configStorage) MakeLocalRepository() error {
+	localPath, err := cs.cfg.GetLocalPath()
+	if err != nil {
+		return fmt.Errorf("failed to get local path %s: %w", localPath, err)
+	}
+	if err := cs.fs.MkdirAll(localPath, 0755); err != nil {
+		return fmt.Errorf("failed to create local directory %s: %w", localPath, err)
 	}
 
 	return nil
 }
 
-func (c Config) CreateConfigFile() error {
-	file, err := os.OpenFile(c.configFile, os.O_RDWR|os.O_CREATE, 0666)
+func (cs configStorage) CreateConfigFile() error {
+	file, err := cs.fs.OpenFile(cs.cfg.GetConfigFilePath(), os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		return fmt.Errorf("failed to create config file %s: %w", c.configFile, err)
+		return fmt.Errorf("failed to create config file %s: %w", cs.cfg.configFile, err)
 	}
 	defer file.Close()
 
 	return nil
+}
+
+func NewConfig(localPath string, configFilename string) (*ConfigData, error) {
+	config := &ConfigData{}
+	if err := config.initLocalPath(localPath); err != nil {
+		return nil, fmt.Errorf("failed to set local path: %w", err)
+	}
+
+	if err := config.initConfigPath(DefaultConfigFilename); err != nil {
+		return nil, fmt.Errorf("failed to set local path: %w", err)
+	}
+
+	return config, nil
+}
+
+func (c *ConfigData) initLocalPath(localPath string) error {
+	if localPath == "" {
+		return errors.New("local path cannot be empty")
+	}
+
+	localPath, err := utils.ResolvePath(localPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve local path %s: %w", localPath, err)
+	}
+	c.localPath = localPath
+
+	return nil
+}
+
+func (c *ConfigData) initConfigPath(configFilename string) error {
+	configPath, err := filepath.Abs(
+		strings.Join([]string{c.localPath, configFilename}, string(os.PathSeparator)),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to resolve config file path: %w", err)
+	}
+	c.configFile = configPath
+
+	return nil
+}
+
+func (c ConfigData) GetConfigFilePath() string {
+	return c.configFile
+}
+
+func (c ConfigData) GetFilenames() []string {
+	if c.Filenames == nil {
+		return []string{}
+	}
+	return c.Filenames
+}
+
+func (c ConfigData) GetRemote() string {
+	if c.Remote == "" {
+		return ""
+	}
+	return c.Remote
+}
+
+func (c ConfigData) GetLocalPath() (string, error) {
+	if c.localPath == "" {
+		return "", errors.New("local path is not set, call InitLocalPath() first")
+	}
+	return c.localPath, nil
 }
 
 func DefaultLocal() string {

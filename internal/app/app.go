@@ -7,18 +7,21 @@ import (
 	"os"
 
 	"github.com/fernandogiovanini/backhome/internal/config"
+	"github.com/fernandogiovanini/backhome/internal/filesystem"
 	"github.com/spf13/viper"
 )
 
 type App struct {
-	config config.IConfig
-	writer io.Writer
+	configStorage config.ConfigStorage
+	filesystem    filesystem.FileSystem
+	writer        io.Writer
 }
 
 func New(command string) (*App, error) {
+	filesystem := filesystem.NewFileSystem()
+	configStorage, err := config.NewConfigStorage(config.LocalPath, config.DefaultConfigFilename, filesystem, viper.New())
 
-	config, err := config.InitConfig()
-	// return pointer of App if config.InitConfig() returns no error or if
+	// return pointer of App if config.NewConfigStorage() returns no error or if
 	// command is init and error is ConfigFileNotFoundError (because init will create the file)
 	if err != nil {
 		if command != "init" {
@@ -30,8 +33,9 @@ func New(command string) (*App, error) {
 	}
 
 	return &App{
-		config: config,
-		writer: os.Stdout,
+		configStorage: configStorage,
+		filesystem:    filesystem,
+		writer:        os.Stdout,
 	}, nil
 }
 

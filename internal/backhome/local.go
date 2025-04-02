@@ -1,3 +1,5 @@
+//go:generate mockery --all --case snake
+
 package backhome
 
 import (
@@ -6,17 +8,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fernandogiovanini/backhome/internal/filesystem"
 	"github.com/otiai10/copy"
 )
 
 // Local represents the local repository
 // The base path is the directory where the files are copied
 type Local struct {
-	path string
+	path       string
+	filesystem filesystem.FileSystem
 }
 
-func NewLocal(path string) (*Local, error) {
-	dir, err := os.Open(path)
+func NewLocal(filesystem filesystem.FileSystem, path string) (*Local, error) {
+	dir, err := filesystem.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open local path %s: %w", path, err)
 	}
@@ -33,22 +37,12 @@ func NewLocal(path string) (*Local, error) {
 	return &Local{path: path}, nil
 }
 
-// MakeLocal creates a new local repository in the specified path
-// if it does not exist and returns a pointer to the Local struct
-func MakeLocal(path string) (*Local, error) {
-	if err := os.MkdirAll(path, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create local path %s: %w", path, err)
-	}
-
-	return NewLocal(path)
+func (l Local) Path() string {
+	return l.path
 }
 
-func (local Local) GetPath() string {
-	return local.path
-}
-
-func (local Local) prepareForRestoring() error {
-	if err := filepath.Walk(local.path, func(path string, info os.FileInfo, err error) error {
+func (l Local) prepareForRestoring() error {
+	if err := filepath.Walk(l.path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("failed to walk path %s to remove files: %w", path, err)
 		}
@@ -56,20 +50,20 @@ func (local Local) prepareForRestoring() error {
 			return nil
 		}
 
-		if err := os.RemoveAll(path); err != nil {
+		if err := l.filesystem.RemoveAll(path); err != nil {
 			return fmt.Errorf("failed to delete path %s: %w", path, err)
 		}
 		return nil
 	}); err != nil {
-		return fmt.Errorf("failed to walk path %s to remove files: %w", local.path, err)
+		return fmt.Errorf("failed to walk path %s to remove files: %w", l.path, err)
 	}
 
 	return nil
 }
 
 // NewSafeCopy creates a new safe copy of the local repository
-func (local Local) NewSafeCopy() (*SafeCopy, error) {
-	destinationPath := strings.Join([]string{local.path, "backhome"}, ".")
+func (l Local) NewSafeCopy(fs filesystem.FileSystem) (*SafeCopy, error) {
+	dstPath := strings.Join([]string{l.path, "backhome"}, ".")
 
 	options := copy.Options{
 		Skip: func(srcinfo os.FileInfo, src, dest string) (bool, error) {
@@ -94,12 +88,13 @@ func (local Local) NewSafeCopy() (*SafeCopy, error) {
 		PreserveOwner: true,
 	}
 
-	if err := copy.Copy(local.path, destinationPath, options); err != nil {
-		return nil, fmt.Errorf("failed to copy local %s to safe copy %s dir: %w", local.path, destinationPath, err)
+	if err := copy.Copy(l.path, dstPath, options); err != nil {
+		return nil, fmt.Errorf("failed to copy local %s to safe copy %s dir: %w", l.path, dstPath, err)
 	}
 
 	return &SafeCopy{
-		path:  destinationPath,
-		local: local,
+		local:      l,
+		filesystem: fs,
+		path:       dstPath,
 	}, nil
 }

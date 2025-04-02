@@ -9,6 +9,9 @@ lint:
 test:
 	go test ./...
 
+mocks:
+	go generate --run=mockery ./...
+
 build:
 	go build -o build/backhome ./cmd/backhome
 
