@@ -12,24 +12,6 @@ type ConfigStorage struct {
 	mock.Mock
 }
 
-// AddFile provides a mock function with given fields: filename
-func (_m *ConfigStorage) AddFile(filename string) error {
-	ret := _m.Called(filename)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddFile")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(filename)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // CreateConfigFile provides a mock function with no fields
 func (_m *ConfigStorage) CreateConfigFile() error {
 	ret := _m.Called()
@@ -49,19 +31,19 @@ func (_m *ConfigStorage) CreateConfigFile() error {
 }
 
 // GetConfig provides a mock function with no fields
-func (_m *ConfigStorage) GetConfig() *config.ConfigData {
+func (_m *ConfigStorage) GetConfig() config.Config {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConfig")
 	}
 
-	var r0 *config.ConfigData
-	if rf, ok := ret.Get(0).(func() *config.ConfigData); ok {
+	var r0 config.Config
+	if rf, ok := ret.Get(0).(func() config.Config); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*config.ConfigData)
+			r0 = ret.Get(0).(config.Config)
 		}
 	}
 
@@ -74,24 +56,6 @@ func (_m *ConfigStorage) MakeLocalRepository() error {
 
 	if len(ret) == 0 {
 		panic("no return value specified for MakeLocalRepository")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func() error); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Save provides a mock function with no fields
-func (_m *ConfigStorage) Save() error {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Save")
 	}
 
 	var r0 error

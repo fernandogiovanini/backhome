@@ -3,7 +3,10 @@
 package mocks
 
 import (
+	io "io"
+
 	backhome "github.com/fernandogiovanini/backhome/internal/backhome"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -12,17 +15,17 @@ type FileListOperations struct {
 	mock.Mock
 }
 
-// CopyTo provides a mock function with given fields: local
-func (_m *FileListOperations) CopyTo(local *backhome.Local) error {
-	ret := _m.Called(local)
+// CopyTo provides a mock function with given fields: local, writer
+func (_m *FileListOperations) CopyTo(local *backhome.Local, writer io.Writer) error {
+	ret := _m.Called(local, writer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CopyTo")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*backhome.Local) error); ok {
-		r0 = rf(local)
+	if rf, ok := ret.Get(0).(func(*backhome.Local, io.Writer) error); ok {
+		r0 = rf(local, writer)
 	} else {
 		r0 = ret.Error(0)
 	}

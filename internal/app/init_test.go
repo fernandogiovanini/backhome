@@ -25,9 +25,9 @@ func TestInit(t *testing.T) {
 		On("GetConfig").Return(cfg)
 	buffer := &bytes.Buffer{}
 	app := &App{
-		configStorage: configStorage,
-		filesystem:    filesystem,
-		writer:        buffer,
+		ConfigStorage: configStorage,
+		Filesystem:    filesystem,
+		Writer:        buffer,
 	}
 
 	result := app.Init()
@@ -42,9 +42,9 @@ func TestInitShouldFailToMakeLocalRepository(t *testing.T) {
 	configStorage.On("MakeLocalRepository").Return(errors.New("failed to make local repository"))
 	buffer := &bytes.Buffer{}
 	app := &App{
-		configStorage: configStorage,
-		filesystem:    filesystem,
-		writer:        buffer,
+		ConfigStorage: configStorage,
+		Filesystem:    filesystem,
+		Writer:        buffer,
 	}
 
 	result := app.Init()
@@ -61,9 +61,9 @@ func TestInitShouldFailToCreateConfigFile(t *testing.T) {
 		On("CreateConfigFile").Return(errors.New("failed to create config file"))
 	buffer := &bytes.Buffer{}
 	app := &App{
-		configStorage: configStorage,
-		filesystem:    filesystem,
-		writer:        buffer,
+		ConfigStorage: configStorage,
+		Filesystem:    filesystem,
+		Writer:        buffer,
 	}
 
 	result := app.Init()

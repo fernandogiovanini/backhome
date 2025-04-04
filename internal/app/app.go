@@ -12,15 +12,18 @@ import (
 )
 
 type App struct {
-	configStorage config.ConfigStorage
-	filesystem    filesystem.FileSystem
-	writer        io.Writer
+	Config        config.Config
+	ConfigManager config.ConfigManager
+	ConfigStorage config.ConfigStorage
+	Filesystem    filesystem.FileSystem
+	Writer        io.Writer
 }
 
 func New(command string) (*App, error) {
-	filesystem := filesystem.NewFileSystem()
-	configStorage, err := config.NewConfigStorage(config.LocalPath, config.DefaultConfigFilename, filesystem, viper.New())
+	v := viper.New()
+	fs := filesystem.NewFileSystem()
 
+	cfgStorage, err := config.NewConfigStorage(config.LocalPath, config.DefaultConfigFilename, fs, v)
 	// return pointer of App if config.NewConfigStorage() returns no error or if
 	// command is init and error is ConfigFileNotFoundError (because init will create the file)
 	if err != nil {
@@ -32,13 +35,17 @@ func New(command string) (*App, error) {
 		}
 	}
 
+	cfg := cfgStorage.GetConfig()
+
 	return &App{
-		configStorage: configStorage,
-		filesystem:    filesystem,
-		writer:        os.Stdout,
+		Config:        cfg,
+		ConfigStorage: cfgStorage,
+		ConfigManager: config.NewConfigManager(v, fs, cfg),
+		Filesystem:    fs,
+		Writer:        os.Stdout,
 	}, nil
 }
 
 func (a *App) Error(message string, args ...any) {
-	fmt.Fprintf(a.writer, "\nERROR! %s\n", fmt.Sprintf(message, args...))
+	fmt.Fprintf(a.Writer, "\nERROR! %s\n", fmt.Sprintf(message, args...))
 }

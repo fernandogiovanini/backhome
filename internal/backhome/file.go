@@ -27,7 +27,7 @@ type File struct {
 }
 
 type FileListOperations interface {
-	CopyTo(local *Local) error
+	CopyTo(local *Local, writer io.Writer) error
 	Count() int
 }
 

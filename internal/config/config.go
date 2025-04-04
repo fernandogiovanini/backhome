@@ -7,9 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
-
 	"slices"
+	"strings"
 
 	"github.com/fernandogiovanini/backhome/internal/filesystem"
 	"github.com/fernandogiovanini/backhome/internal/utils"
@@ -25,20 +24,6 @@ var (
 	LocalPath string
 )
 
-type ConfigStorage interface {
-	AddFile(filename string) error
-	CreateConfigFile() error
-	GetConfig() *ConfigData
-	MakeLocalRepository() error
-	Save() error
-}
-
-type configStorage struct {
-	fs  filesystem.FileSystem
-	cfg *ConfigData
-	v   *viper.Viper
-}
-
 type Config interface {
 	GetConfigFilePath() string
 	GetFilenames() []string
@@ -52,114 +37,6 @@ type ConfigData struct {
 
 	localPath  string
 	configFile string
-}
-
-func NewConfigStorage(
-	localPath string,
-	cfgFilename string,
-	fs filesystem.FileSystem,
-	v *viper.Viper) (*configStorage, error) {
-	cfg, err := NewConfig(LocalPath, cfgFilename)
-	if err != nil {
-		return nil, err
-	}
-
-	configStorage := &configStorage{
-		cfg: cfg,
-		fs:  fs,
-		v:   v,
-	}
-
-	v.AddConfigPath(filepath.Dir(cfg.GetConfigFilePath()))
-
-	v.SetConfigName(strings.TrimSuffix(filepath.Base(cfg.GetConfigFilePath()), filepath.Ext(cfg.GetConfigFilePath())))
-	v.SetConfigType("yaml")
-
-	v.SetDefault("files", []string{})
-	v.SetDefault("remote", nil)
-
-	if err := v.ReadInConfig(); err != nil {
-		return configStorage, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	if err := v.UnmarshalExact(&cfg); err != nil {
-		return nil, fmt.Errorf("invalid config file %s: %w", v.ConfigFileUsed(), err)
-	}
-
-	return configStorage, nil
-}
-
-func (cs *configStorage) AddFile(filename string) error {
-	if filename == "" {
-		return errors.New("ilename cannot be empty")
-	}
-
-	path, err := utils.ResolvePath(filename)
-	if err != nil {
-		return fmt.Errorf("failed to resolve %s: %w", filename, err)
-	}
-
-	file, err := cs.fs.Open(path)
-	if err != nil {
-		if cs.fs.IsNotExist(err) {
-			return fmt.Errorf("file %s does not exist", path)
-		}
-		if cs.fs.IsPermission(err) {
-			return fmt.Errorf("permission denied for %s", path)
-		}
-		return fmt.Errorf("failed to open %s: %w", path, err)
-	}
-	defer file.Close()
-
-	fileinfo, err := file.Stat()
-	if err != nil {
-		return fmt.Errorf("failed to read %s stats: %w", path, err)
-	}
-	if fileinfo.IsDir() {
-		return fmt.Errorf("file %s is a directory", path)
-	}
-
-	if slices.Contains(cs.cfg.GetFilenames(), filename) {
-		return fmt.Errorf("file %s already exists in config", filename)
-	}
-
-	filenames := append(cs.cfg.GetFilenames(), filename)
-	cs.v.Set("files", filenames)
-
-	return nil
-}
-
-func (cs *configStorage) GetConfig() *ConfigData {
-	return cs.cfg
-}
-
-func (cs configStorage) Save() error {
-	if err := cs.v.WriteConfig(); err != nil {
-		return fmt.Errorf("failed to write config file %s: %w", viper.ConfigFileUsed(), err)
-	}
-	return nil
-}
-
-func (cs configStorage) MakeLocalRepository() error {
-	localPath, err := cs.cfg.GetLocalPath()
-	if err != nil {
-		return fmt.Errorf("failed to get local path %s: %w", localPath, err)
-	}
-	if err := cs.fs.MkdirAll(localPath, 0755); err != nil {
-		return fmt.Errorf("failed to create local directory %s: %w", localPath, err)
-	}
-
-	return nil
-}
-
-func (cs configStorage) CreateConfigFile() error {
-	file, err := cs.fs.OpenFile(cs.cfg.GetConfigFilePath(), os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		return fmt.Errorf("failed to create config file %s: %w", cs.cfg.configFile, err)
-	}
-	defer file.Close()
-
-	return nil
 }
 
 func NewConfig(localPath string, configFilename string) (*ConfigData, error) {
@@ -224,6 +101,144 @@ func (c ConfigData) GetLocalPath() (string, error) {
 		return "", errors.New("local path is not set, call InitLocalPath() first")
 	}
 	return c.localPath, nil
+}
+
+type ConfigManager interface {
+	AddFile(filename string) error
+	Save() error
+}
+
+type ViperBackedConfigManager struct {
+	v   *viper.Viper
+	fs  filesystem.FileSystem
+	cfg Config
+}
+
+func NewConfigManager(viper *viper.Viper, fileSystem filesystem.FileSystem, config Config) *ViperBackedConfigManager {
+	return &ViperBackedConfigManager{
+		v:   viper,
+		fs:  fileSystem,
+		cfg: config,
+	}
+}
+func (cm *ViperBackedConfigManager) AddFile(filename string) error {
+	if filename == "" {
+		return errors.New("ilename cannot be empty")
+	}
+
+	path, err := utils.ResolvePath(filename)
+	if err != nil {
+		return fmt.Errorf("failed to resolve %s: %w", filename, err)
+	}
+
+	file, err := cm.fs.Open(path)
+	if err != nil {
+		if cm.fs.IsNotExist(err) {
+			return fmt.Errorf("file %s does not exist", path)
+		}
+		if cm.fs.IsPermission(err) {
+			return fmt.Errorf("permission denied for %s", path)
+		}
+		return fmt.Errorf("failed to open %s: %w", path, err)
+	}
+	defer file.Close()
+
+	fileinfo, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to read %s stats: %w", path, err)
+	}
+	if fileinfo.IsDir() {
+		return fmt.Errorf("file %s is a directory", path)
+	}
+
+	if slices.Contains(cm.cfg.GetFilenames(), filename) {
+		return fmt.Errorf("file %s already exists in config", filename)
+	}
+
+	filenames := append(cm.cfg.GetFilenames(), filename)
+	cm.v.Set("files", filenames)
+
+	return nil
+}
+
+func (cm ViperBackedConfigManager) Save() error {
+	if err := cm.v.WriteConfig(); err != nil {
+		return fmt.Errorf("failed to write config file %s: %w", viper.ConfigFileUsed(), err)
+	}
+	return nil
+}
+
+type ConfigStorage interface {
+	CreateConfigFile() error
+	GetConfig() Config
+	MakeLocalRepository() error
+}
+
+type ViperBackedConfigStorage struct {
+	v   *viper.Viper
+	fs  filesystem.FileSystem
+	cfg Config
+}
+
+func NewConfigStorage(
+	localPath string,
+	cfgFilename string,
+	fs filesystem.FileSystem,
+	v *viper.Viper) (*ViperBackedConfigStorage, error) {
+	cfg, err := NewConfig(localPath, cfgFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	configStorage := &ViperBackedConfigStorage{
+		v:   v,
+		cfg: cfg,
+		fs:  fs,
+	}
+
+	v.AddConfigPath(filepath.Dir(cfg.GetConfigFilePath()))
+
+	v.SetConfigName(strings.TrimSuffix(filepath.Base(cfg.GetConfigFilePath()), filepath.Ext(cfg.GetConfigFilePath())))
+	v.SetConfigType("yaml")
+
+	v.SetDefault("files", []string{})
+	v.SetDefault("remote", nil)
+
+	if err := v.ReadInConfig(); err != nil {
+		return configStorage, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	if err := v.UnmarshalExact(&cfg); err != nil {
+		return nil, fmt.Errorf("invalid config file %s: %w", v.ConfigFileUsed(), err)
+	}
+
+	return configStorage, nil
+}
+
+func (cs *ViperBackedConfigStorage) GetConfig() Config {
+	return cs.cfg
+}
+
+func (cs ViperBackedConfigStorage) MakeLocalRepository() error {
+	localPath, err := cs.cfg.GetLocalPath()
+	if err != nil {
+		return fmt.Errorf("failed to get local path %s: %w", localPath, err)
+	}
+	if err := cs.fs.MkdirAll(localPath, 0755); err != nil {
+		return fmt.Errorf("failed to create local directory %s: %w", localPath, err)
+	}
+
+	return nil
+}
+
+func (cs ViperBackedConfigStorage) CreateConfigFile() error {
+	file, err := cs.fs.OpenFile(cs.cfg.GetConfigFilePath(), os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return fmt.Errorf("failed to create config file %s: %w", cs.cfg.GetConfigFilePath(), err)
+	}
+	defer file.Close()
+
+	return nil
 }
 
 func DefaultLocal() string {
