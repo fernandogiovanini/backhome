@@ -8,26 +8,26 @@ import (
 )
 
 func (a *App) Copy() error {
-	cfg := a.configStorage.GetConfig()
+	cfg := a.ConfigStorage.GetConfig()
 	localPath, err := cfg.GetLocalPath()
 	if err != nil {
 		return fmt.Errorf("failed to get local path %s: %w", localPath, err)
 	}
 
-	fmt.Fprintf(a.writer, "Copying files to %s\n\n", localPath)
+	fmt.Fprintf(a.Writer, "Copying files to %s\n\n", localPath)
 
-	local, err := backhome.NewLocal(a.filesystem, localPath)
+	local, err := backhome.NewLocal(a.Filesystem, localPath)
 	if err != nil {
 		return fmt.Errorf("failed to open local repository %s: %v", localPath, err)
 	}
 
-	files, err := backhome.NewFileList(cfg.GetFilenames(), a.filesystem)
+	files, err := backhome.NewFileList(cfg.GetFilenames(), a.Filesystem)
 	if err != nil {
 		return fmt.Errorf("failed to get the list of files: %v", err)
 	}
 
 	if len(files.Files) == 0 {
-		fmt.Fprintln(a.writer, "No files to copy")
+		fmt.Fprintln(a.Writer, "No files to copy")
 		return nil
 	}
 
@@ -36,18 +36,18 @@ func (a *App) Copy() error {
 		return fmt.Errorf("failed to copy files: %w", err)
 	}
 
-	fmt.Fprint(a.writer, "\nDone")
+	fmt.Fprint(a.Writer, "\nDone")
 
 	return nil
 }
 
-func copyFiles(a *App, files *backhome.FileList, local *backhome.Local) error {
-	safeCopy, err := local.NewSafeCopy(a.filesystem)
+func copyFiles(a *App, files backhome.FileListOperations, local *backhome.Local) error {
+	safeCopy, err := local.NewSafeCopy(a.Filesystem)
 	if err != nil {
 		return fmt.Errorf("failed to create safe copy: %v", err)
 	}
 
-	if err := files.CopyTo(local, a.writer); err != nil {
+	if err := files.CopyTo(local, a.Writer); err != nil {
 		if err := backhome.RestoreSafeCopy(safeCopy); err != nil {
 			a.Error("Failed to restore safe copy: %v", err)
 		}

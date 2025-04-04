@@ -6,20 +6,19 @@ import (
 )
 
 func (a *App) Add(files ...string) error {
-	cs := a.configStorage
+	cm := a.ConfigManager
 	for _, file := range files {
-		if err := cs.AddFile(file); err != nil {
+		if err := cm.AddFile(file); err != nil {
 			return fmt.Errorf("failed to add files to config: %w", err)
 		}
 	}
 
-	if err := cs.Save(); err != nil {
+	if err := cm.Save(); err != nil {
 		return fmt.Errorf("failed to add files to config: %w", err)
 	}
 
 	// TODO: Pluralize
-	cfg := cs.GetConfig()
-	fmt.Printf(strconv.Itoa(len(files))+" files(s) added to %s", cfg.GetConfigFilePath())
+	fmt.Printf(strconv.Itoa(len(files))+" files(s) added to %s", a.Config.GetConfigFilePath())
 
 	return nil
 }
